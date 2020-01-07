@@ -31,6 +31,10 @@ app.use('/viber/webhook', bot.middleware());
   '/create' path to process message sent in the post body
 */
 
+app.get('/',(req,res) => {
+  return res.send("Hi There!")
+});
+
 app.post('/create', function (request, response) {
   createPresentation(request.body)
   response.end("yes");
@@ -295,13 +299,13 @@ function createPresentation(message) {
 
 
 var server = app.listen(PORT, () => {
-
+  /*
   //We're registering the Viber bot with the webhook
   bot.setWebhook(
     `${process.env.EXPOSE_URL}/viber/webhook`
   ).catch(error => {
     console.log("Cannot set webhook on following server. Is it running?");
   })
-
+*/
   console.log("The PresentationCreator app is listening on %s", PORT)
 })
