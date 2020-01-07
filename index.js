@@ -7,7 +7,7 @@ const util = require('util')
 const express = require('express');
 const app = express();
 const bodyParser = require("body-parser");
-const port = 8000;
+const port = process.env.PORT | 8000;
 
 const ViberBot = require('viber-bot').Bot,
   BotEvents = require('viber-bot').Events,
