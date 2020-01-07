@@ -7,7 +7,7 @@ const util = require('util')
 const express = require('express');
 const app = express();
 const bodyParser = require("body-parser");
-const port = process.env.PORT | 8000;
+const PORT = process.env.PORT || 8000;
 
 const ViberBot = require('viber-bot').Bot,
   BotEvents = require('viber-bot').Events,
@@ -263,7 +263,7 @@ function createPresentation(message) {
 }
 
 
-var server = app.listen(port, () => {
+var server = app.listen(PORT, () => {
     /*
     bot.setWebhook(
       `${process.env.EXPOSE_URL}/viber/webhook`
