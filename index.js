@@ -264,13 +264,13 @@ function createPresentation(message) {
 
 
 var server = app.listen(PORT, () => {
-    /*
+    
     bot.setWebhook(
       `${process.env.EXPOSE_URL}/viber/webhook`
     ).catch(error => {
       console.log("Cannot set webhook on following server. Is it running?");
     })
-    */
+    
 
   console.log("Example app listening on %s", PORT)
 })
