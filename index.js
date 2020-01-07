@@ -10,13 +10,12 @@ const bodyParser = require("body-parser");
 const PORT = process.env.PORT || 8000;
 
 app.use(bodyParser.text());
-app.use('/viber/webhook', bot.middleware());
-
-
 
 const ViberBot = require('viber-bot').Bot,
   BotEvents = require('viber-bot').Events,
   TextMessage = require('viber-bot').Message.Text;
+
+
 
 
 //Initialize the bot with the token and other matadata
@@ -26,6 +25,7 @@ const bot = new ViberBot({
   avatar: "http://ieecdulles.com/wp-content/uploads/2017/09/IEEC_Dulles_logo.png"
 });
 
+app.use('/viber/webhook', bot.middleware());
 /*
   This is mainly for local testing. Call this endpoint with the 
   '/create' path to process message sent in the post body
