@@ -19,6 +19,13 @@ const ViberBot = require('viber-bot').Bot,
   TextMessage = require('viber-bot').Message.Text;
 
 
+//Initialize the bot with the token and other matadata
+const bot = new ViberBot({
+  authToken: process.env.BOT_TOKEN,
+  name: "IEEC Dulles",
+  avatar: "http://ieecdulles.com/wp-content/uploads/2017/09/IEEC_Dulles_logo.png"
+});
+
 /*
   This is mainly for local testing. Call this endpoint with the 
   '/create' path to process message sent in the post body
@@ -41,12 +48,7 @@ if (!process.env.EXPOSE_URL) {
   return;
 }
 
-//Initialize the bot with the token and other matadata
-const bot = new ViberBot({
-  authToken: process.env.BOT_TOKEN,
-  name: "IEEC Dulles",
-  avatar: "http://ieecdulles.com/wp-content/uploads/2017/09/IEEC_Dulles_logo.png"
-});
+
 
 //When a user subscribes to the bot, send this message
 bot.on(BotEvents.SUBSCRIBED, response => {
@@ -62,17 +64,17 @@ bot.on(BotEvents.MESSAGE_RECEIVED, (message, response) => {
 
 
 
-  /**
-   * This function gets the message from viber and does a few things:
-   *    - Gets authentication token that allows us to interact with the Google Slides and Drive API
-   *    - Splits up message, 
-   *    - Duplicates a template presentation
-   *    - Modify the template with the song lyrics
-   *    - Download the modified presentaiton as a PPT
-   *    - Upload the PPT file back to Google Drive
-   * 
-   * @param {message} String The OAuth2 client to get token for.
-   */
+/**
+ * This function gets the message from viber and does a few things:
+ *    - Gets authentication token that allows us to interact with the Google Slides and Drive API
+ *    - Splits up message, 
+ *    - Duplicates a template presentation
+ *    - Modify the template with the song lyrics
+ *    - Download the modified presentaiton as a PPT
+ *    - Upload the PPT file back to Google Drive
+ * 
+ * @param {message} String The OAuth2 client to get token for.
+ */
 
 function createPresentation(message) {
 
@@ -294,12 +296,12 @@ function createPresentation(message) {
 
 var server = app.listen(PORT, () => {
 
-    //We're registering the Viber bot with the webhook
-    bot.setWebhook(
-      `${process.env.EXPOSE_URL}/viber/webhook`
-    ).catch(error => {
-      console.log("Cannot set webhook on following server. Is it running?");
-    })
-    
+  //We're registering the Viber bot with the webhook
+  bot.setWebhook(
+    `${process.env.EXPOSE_URL}/viber/webhook`
+  ).catch(error => {
+    console.log("Cannot set webhook on following server. Is it running?");
+  })
+
   console.log("The PresentationCreator app is listening on %s", PORT)
 })
