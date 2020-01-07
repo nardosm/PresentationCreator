@@ -272,5 +272,5 @@ var server = app.listen(PORT, () => {
     })
     */
 
-  console.log("Example app listening on %s", port)
+  console.log("Example app listening on %s", PORT)
 })
