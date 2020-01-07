@@ -207,7 +207,7 @@ function createPresentation(message) {
         if (err) return console.log('There is an error modifying the slide: ' + err);
         console.log(`OUTPUT OF RES3 ${util.inspect(res3.data, false, null, true)}`);
 
-        var dest = fs.createWriteStream('./temp/' + nextSunday);
+        var dest = fs.createWriteStream('./temp/' + nextSunday + '.pptx');
 
 
         //res3.data.presentationId,
@@ -226,11 +226,11 @@ function createPresentation(message) {
             //console.log(response)
 
             var fileMetadata = {
-              'name': nextSunday
+              'name': nextSunday + '.pptx'
             };
             var media = {
               mimeType: mime,
-              body: fs.createReadStream('./temp/' + nextSunday)
+              body: fs.createReadStream('./temp/' + nextSunday + '.pptx')
             };
             drive.files.create({
               resource: fileMetadata,
