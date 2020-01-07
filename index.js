@@ -3,25 +3,60 @@ const readline = require('readline');
 const { google } = require('googleapis');
 const util = require('util')
 
+
 const express = require('express');
 const app = express();
 const bodyParser = require("body-parser");
 const port = 8000;
 
+const ViberBot = require('viber-bot').Bot,
+  BotEvents = require('viber-bot').Events,
+  TextMessage = require('viber-bot').Message.Text;
+
+if (!process.env.BOT_TOKEN) {
+  console.log('Could not find bot account token key');
+  return;
+}
+/*
+if (!process.env.EXPOSE_URL) {
+  console.log("Could not find exposing url");
+  return;
+}
+*/
+const bot = new ViberBot({
+  authToken: process.env.BOT_TOKEN,
+  name: "IEEC Dulles",
+  avatar: "http://ieecdulles.com/wp-content/uploads/2017/09/IEEC_Dulles_logo.png"
+});
+
+bot.on(BotEvents.SUBSCRIBED, response => {
+  response.send(new TextMessage(`Hi there ${response.userProfile.name}. I am the ${bot.name} bot! Feel free to send me song lyrics and I'll convert them to a PowerPoint for you`));
+});
+
+bot.on(BotEvents.MESSAGE_RECEIVED, (message, response) => {
+  //console.log(`${message.text} from ${response.userProfile.name}`);
+  createPresentation(message.text);
+  response.send(new TextMessage(`Thanks for your message ${response.userProfile.name}. If this is a song lyrics, I will try my best to prepare the PowerPoint right away! Have a blessed day!`))
+})
+
 
 //app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.text());
+app.use('/viber/webhook', bot.middleware());
 
-app.post('/createSlides', (request, response) => {
 
-  var textArray = request.body.split(/\n{2,}/);
+app.post('/create', function (request, response) {
+  createPresentation(request.body)
+  response.end("yes");
+});
+
+
+function createPresentation(message) {
+
+  var textArray = message.split(/\n{2,}/);
+  //var viberToken = "4adf6f8850e7d389-f63451bbb7670ed7-8b4d898977c55807"
 
   console.log(textArray);
-  response.end("yes");
-  //var replacementText = request.body.replacementText
-
-
-  
 
   // If modifying these scopes, delete token.json.
   const SCOPES = ['https://www.googleapis.com/auth/presentations', 'https://www.googleapis.com/auth/drive'];
@@ -99,33 +134,10 @@ app.post('/createSlides', (request, response) => {
     //Call the function that gets us next Sunday's date
     var nextSunday = nextWeekdayDate(date, 7);
     console.log(`The date for next Sunday is ${nextSunday}`)
+    var mime = "application/vnd.openxmlformats-officedocument.presentationml.presentation"
 
     //Name the file with the date for next sunday
     var body = { name: nextSunday };
-
-
-
-    /*
-      here is where the magic happens:
-        - Get next Sunday's date
-        - Supply the file name using that date 
-        - Copy the template file naming it with Sunday's date
-        - Get the full text from the request endpoint (Viber message in the future)
-        - Then modify the copy with the messages
-        - Write file back to drive
-        - Export file as PowerPoint file
-        - Future scope 
-          - Generate a word doc from the Viber message and print it
-    
-    */
-
-
-
-
-    
-
-
-
 
     // Copy the file
     drive.files.copy({
@@ -134,38 +146,25 @@ app.post('/createSlides', (request, response) => {
     }, (err, res) => {
 
 
-      textArray.forEach((replacementText, index) => {
-        
-      
+      let requests = []
+      extArray = textArray.reverse();
+      for (let index = 0; index < textArray.length; index++) {
 
-
-      var originalSlideID = "gd5b15f0a3_5_26";
-      let requests = [{
-        duplicateObject: {
-          objectId: originalSlideID,
-          objectIds: {
-            'gd5b15f0a3_5_28': "copiedText_00" + index
-          }
-        },
-
-      }]
-      if (err) return console.log("ERROR OCCURED");
-      console.log(res.data.id);
-      //Get the file ID of the copied file and modify the slides
-
-      slides.presentations.batchUpdate({
-        presentationId: res.data.id,
-        resource: {
-          requests
-        }
-      }, (err, res2) => {
         if (err) return console.log('The API returned an error: ' + err);
-        console.log(util.inspect(res2.data, false, null, true))
-
-        let requests = [
+        //console.log(util.inspect(res2.data, false, null, true))
+        var originalSlideID = "gd5b15f0a3_5_26";
+        requests.push(
+          {
+            duplicateObject: {
+              objectId: originalSlideID,
+              objectIds: {
+                'gd5b15f0a3_5_28': "copiedText_" + index
+              }
+            },
+          },
           {
             deleteText: {
-              objectId: "copiedText_00" + index,
+              objectId: "copiedText_" + index,
               textRange: {
                 type: 'ALL'
               }
@@ -173,40 +172,85 @@ app.post('/createSlides', (request, response) => {
           },
           {
             insertText: {
-              objectId: "copiedText_00" + index,
+              objectId: "copiedText_" + index,
               insertionIndex: 0,
-              text: replacementText
+              text: textArray[index]
             }
           }
-        ]
+
+        )
 
 
-        slides.presentations.batchUpdate({
-          presentationId: res.data.id,
-          resource: {
+      }
 
-            requests
+      slides.presentations.batchUpdate({
+        presentationId: res.data.id,
+        resource: {
+          requests
+        }
+      }, (err, res3) => {
+        if (err) return console.log('There is an error modifying the slide: ' + err);
+        //response.json(util.inspect(res3.data, false, null, true));
+      });
+
+      requests = [{
+        deleteObject: {
+          objectId: originalSlideID
+        }
+      }]
+      slides.presentations.batchUpdate({
+        presentationId: res.data.id,
+        resource: {
+          requests
+        }
+      }, (err, res3) => {
+        if (err) return console.log('There is an error modifying the slide: ' + err);
+        console.log(`OUTPUT OF RES3 ${util.inspect(res3.data, false, null, true)}`);
+
+        var dest = fs.createWriteStream('./temp/' + nextSunday);
 
 
-          }
-        }, (err, res3) => {
-          if (err) return console.log('There is an error modifying the slide: ' + err);
-          //response.json(util.inspect(res3.data, false, null, true));
+        //res3.data.presentationId,
+        drive.files.export({
+          fileId: res3.data.presentationId,
+          mimeType: mime
+        }, {
+          responseType: 'stream'
+        }, function (err, response) {
+          if (err) return done(err);
+
+          response.data.on('error', err => {
+            done(err);
+          }).on('end', () => {
+            console.log("DONE CREATING FILE");
+            //console.log(response)
+
+            var fileMetadata = {
+              'name': nextSunday
+            };
+            var media = {
+              mimeType: mime,
+              body: fs.createReadStream('./temp/' + nextSunday)
+            };
+            drive.files.create({
+              resource: fileMetadata,
+              media: media
+            }, function (err, file) {
+              if (err) {
+                // Handle error
+                console.error(err);
+              } else {
+                console.log('File Id: ', file.id);
+              }
+            });
+          })
+            .pipe(dest);
         });
-      })
 
-
-
-    });
-
+      });
 
     });
-
-
-    
-
   }
-
 
 
   function nextWeekdayDate(date, day_in_week) {
@@ -216,14 +260,17 @@ app.post('/createSlides', (request, response) => {
     let formatted_date = ret.getDate() + "-" + months[ret.getMonth()] + "-" + ret.getFullYear()
     return formatted_date;
   }
-
-  
-
-});
+}
 
 
-var server = app.listen(port, function () {
+var server = app.listen(port, () => {
+    /*
+    bot.setWebhook(
+      `${process.env.EXPOSE_URL}/viber/webhook`
+    ).catch(error => {
+      console.log("Cannot set webhook on following server. Is it running?");
+    })
+    */
 
-  
-  console.log("Example app listening on %s",  port)
+  console.log("Example app listening on %s", port)
 })
