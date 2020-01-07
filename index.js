@@ -9,30 +9,51 @@ const app = express();
 const bodyParser = require("body-parser");
 const PORT = process.env.PORT || 8000;
 
+app.use(bodyParser.text());
+app.use('/viber/webhook', bot.middleware());
+
+
+
 const ViberBot = require('viber-bot').Bot,
   BotEvents = require('viber-bot').Events,
   TextMessage = require('viber-bot').Message.Text;
 
+
+/*
+  This is mainly for local testing. Call this endpoint with the 
+  '/create' path to process message sent in the post body
+*/
+
+app.post('/create', function (request, response) {
+  createPresentation(request.body)
+  response.end("yes");
+});
+
+//We're getting the Viber Bot Token from the environment variable. 
 if (!process.env.BOT_TOKEN) {
   console.log('Could not find bot account token key');
   return;
 }
-/*
+
+//We're also getting the Expose URL from the environment variable to register is later to the bot
 if (!process.env.EXPOSE_URL) {
   console.log("Could not find exposing url");
   return;
 }
-*/
+
+//Initialize the bot with the token and other matadata
 const bot = new ViberBot({
   authToken: process.env.BOT_TOKEN,
   name: "IEEC Dulles",
   avatar: "http://ieecdulles.com/wp-content/uploads/2017/09/IEEC_Dulles_logo.png"
 });
 
+//When a user subscribes to the bot, send this message
 bot.on(BotEvents.SUBSCRIBED, response => {
   response.send(new TextMessage(`Hi there ${response.userProfile.name}. I am the ${bot.name} bot! Feel free to send me song lyrics and I'll convert them to a PowerPoint for you`));
 });
 
+//When we recieve a message, we grab it and call the function that creates the slides using the Google APIs
 bot.on(BotEvents.MESSAGE_RECEIVED, (message, response) => {
   //console.log(`${message.text} from ${response.userProfile.name}`);
   createPresentation(message.text);
@@ -40,21 +61,23 @@ bot.on(BotEvents.MESSAGE_RECEIVED, (message, response) => {
 })
 
 
-//app.use(bodyParser.urlencoded({extended: false}));
-app.use(bodyParser.text());
-app.use('/viber/webhook', bot.middleware());
 
-
-app.post('/create', function (request, response) {
-  createPresentation(request.body)
-  response.end("yes");
-});
-
+  /**
+   * This function gets the message from viber and does a few things:
+   *    - Gets authentication token that allows us to interact with the Google Slides and Drive API
+   *    - Splits up message, 
+   *    - Duplicates a template presentation
+   *    - Modify the template with the song lyrics
+   *    - Download the modified presentaiton as a PPT
+   *    - Upload the PPT file back to Google Drive
+   * 
+   * @param {message} String The OAuth2 client to get token for.
+   */
 
 function createPresentation(message) {
 
+  //Split up the message into separate arrays by detecting multiple carriage returns through the Regex
   var textArray = message.split(/\n{2,}/);
-  //var viberToken = "4adf6f8850e7d389-f63451bbb7670ed7-8b4d898977c55807"
 
   console.log(textArray);
 
@@ -133,13 +156,14 @@ function createPresentation(message) {
     var date = Date();
     //Call the function that gets us next Sunday's date
     var nextSunday = nextWeekdayDate(date, 7);
-    console.log(`The date for next Sunday is ${nextSunday}`)
+    console.log(`File will be named: ${nextSunday}`)
+    //MIME type for downloding and uploading files to Drive
     var mime = "application/vnd.openxmlformats-officedocument.presentationml.presentation"
 
     //Name the file with the date for next sunday
     var body = { name: nextSunday };
 
-    // Copy the file
+    // Duplicate the template file by providing the file ID
     drive.files.copy({
       'fileId': '1ZBFXk9Mn7NwzuuquhEkyvUxWc9kSwtlAvR_tWXpFMa0',
       'resource': body
@@ -147,11 +171,16 @@ function createPresentation(message) {
 
 
       let requests = []
+      //Reverse the array of song lyrics because somehow the API writes the slides in reverse order
       extArray = textArray.reverse();
       for (let index = 0; index < textArray.length; index++) {
 
         if (err) return console.log('The API returned an error: ' + err);
-        //console.log(util.inspect(res2.data, false, null, true))
+
+        /*
+          We're pushing the request to an array because it's a best practice 
+          not to call the batchupdate API in a loop
+        */
         var originalSlideID = "gd5b15f0a3_5_26";
         requests.push(
           {
@@ -179,10 +208,8 @@ function createPresentation(message) {
           }
 
         )
-
-
       }
-
+      // Call the batchUpdate API to duplicate slides, delete text, and insert text
       slides.presentations.batchUpdate({
         presentationId: res.data.id,
         resource: {
@@ -190,9 +217,12 @@ function createPresentation(message) {
         }
       }, (err, res3) => {
         if (err) return console.log('There is an error modifying the slide: ' + err);
-        //response.json(util.inspect(res3.data, false, null, true));
       });
 
+      /*
+        After we successfully create the slides with the modifications, 
+        delete the tempalate slide
+      */
       requests = [{
         deleteObject: {
           objectId: originalSlideID
@@ -205,12 +235,11 @@ function createPresentation(message) {
         }
       }, (err, res3) => {
         if (err) return console.log('There is an error modifying the slide: ' + err);
-        console.log(`OUTPUT OF RES3 ${util.inspect(res3.data, false, null, true)}`);
+        console.log(`OUTPUT OF MODIFIED PRESENTATION ${util.inspect(res3.data, false, null, true)}`);
 
+        //We're going to be exporting the file locally to convert it to powerpoint
         var dest = fs.createWriteStream('/tmp/' + nextSunday + '.pptx');
 
-
-        //res3.data.presentationId,
         drive.files.export({
           fileId: res3.data.presentationId,
           mimeType: mime
@@ -222,9 +251,9 @@ function createPresentation(message) {
           response.data.on('error', err => {
             done(err);
           }).on('end', () => {
-            console.log("DONE CREATING FILE");
-            //console.log(response)
+            console.log("Successfully exported the PowerPoint file!!!");
 
+            //Uplod the file back to Drive as a PPT
             var fileMetadata = {
               'name': nextSunday + '.pptx'
             };
@@ -240,7 +269,7 @@ function createPresentation(message) {
                 // Handle error
                 console.error(err);
               } else {
-                console.log('File Id: ', file.id);
+                console.log("Successfully uploaded the PowerPoint file!!!");
               }
             });
           })
@@ -264,13 +293,13 @@ function createPresentation(message) {
 
 
 var server = app.listen(PORT, () => {
-    
+
+    //We're registering the Viber bot with the webhook
     bot.setWebhook(
       `${process.env.EXPOSE_URL}/viber/webhook`
     ).catch(error => {
       console.log("Cannot set webhook on following server. Is it running?");
     })
     
-
-  console.log("Example app listening on %s", PORT)
+  console.log("The PresentationCreator app is listening on %s", PORT)
 })
