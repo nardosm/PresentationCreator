@@ -108,7 +108,7 @@ function createPresentation(message) {
    * @param {function} callback The callback to call with the authorized client.
    */
   function authorize(credentials, callback) {
-    const { client_secret, client_id, redirect_uris } = credentials.installed;
+    const { client_secret, client_id, redirect_uris } = credentials.web;
     const oAuth2Client = new google.auth.OAuth2(
       client_id, client_secret, redirect_uris[0]);
 
@@ -171,7 +171,7 @@ function createPresentation(message) {
 
     // Duplicate the template file by providing the file ID
     drive.files.copy({
-      'fileId': '1ZBFXk9Mn7NwzuuquhEkyvUxWc9kSwtlAvR_tWXpFMa0',
+      'fileId': '1kpW1q9II6k6luOSlgO-IISSvVp2XQW9jPAra1IepOag',
       'resource': body
     }, (err, res) => {
 
@@ -187,13 +187,13 @@ function createPresentation(message) {
           We're pushing the request to an array because it's a best practice 
           not to call the batchupdate API in a loop
         */
-        var originalSlideID = "gd5b15f0a3_5_26";
+        var originalSlideID = "p4";
         requests.push(
           {
             duplicateObject: {
               objectId: originalSlideID,
               objectIds: {
-                'gd5b15f0a3_5_28': "copiedText_" + index
+                'p4_i5': "copiedText_" + index
               }
             },
           },
@@ -299,13 +299,13 @@ function createPresentation(message) {
 
 
 var server = app.listen(PORT, () => {
-  /*
+  
   //We're registering the Viber bot with the webhook
   bot.setWebhook(
     `${process.env.EXPOSE_URL}/viber/webhook`
   ).catch(error => {
     console.log("Cannot set webhook on following server. Is it running?");
   })
-*/
+
   console.log("The PresentationCreator app is listening on %s", PORT)
 })
