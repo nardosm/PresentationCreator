@@ -44,7 +44,7 @@ app.post('/create', function (request, response) {
 if (!process.env.BOT_TOKEN) {
   console.log('Could not find bot account token key');
   return;
-}
+} 
 
 //We're also getting the Expose URL from the environment variable to register is later to the bot
 if (!process.env.EXPOSE_URL) {
@@ -243,6 +243,7 @@ function createPresentation(message) {
         if (err) return console.log('There is an error modifying the slide: ' + err);
         console.log(`OUTPUT OF MODIFIED PRESENTATION ${util.inspect(res3.data, false, null, true)}`);
 
+        /*
         //We're going to be exporting the file locally to convert it to powerpoint
         var dest = fs.createWriteStream('/tmp/' + nextSunday + '.pptx');
 
@@ -281,6 +282,7 @@ function createPresentation(message) {
           })
             .pipe(dest);
         });
+        */
 
       });
 
@@ -299,13 +301,13 @@ function createPresentation(message) {
 
 
 var server = app.listen(PORT, () => {
-  
+  /*
   //We're registering the Viber bot with the webhook
   bot.setWebhook(
     `${process.env.EXPOSE_URL}/viber/webhook`
   ).catch(error => {
     console.log("Cannot set webhook on following server. Is it running?");
   })
-
+*/
   console.log("The PresentationCreator app is listening on %s", PORT)
 })
