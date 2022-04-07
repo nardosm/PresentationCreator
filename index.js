@@ -66,7 +66,7 @@ bot.on(BotEvents.SUBSCRIBED, response => {
 bot.on(BotEvents.MESSAGE_RECEIVED, (message, response) => {
   //console.log(`${message.text} from ${response.userProfile.name}`);
   createPresentation(message.text);
-  console.log(`SLIDE CREATION RESPONSE INSIDE BOT: ${slideCreationResponse}`)
+  //console.log(`SLIDE CREATION RESPONSE INSIDE BOT: ${slideCreationResponse}`)
   while (fileLink == "") {
     console.log("FIle Link Empty");
   }
