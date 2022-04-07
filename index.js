@@ -7,6 +7,7 @@ const util = require('util')
 const express = require('express');
 const app = express();
 const bodyParser = require("body-parser");
+const { file } = require('googleapis/build/src/apis/file');
 const PORT = process.env.PORT || 8000;
 
 app.use(bodyParser.text());
@@ -14,9 +15,10 @@ app.use(bodyParser.text());
 const ViberBot = require('viber-bot').Bot,
   BotEvents = require('viber-bot').Events,
   TextMessage = require('viber-bot').Message.Text;
+  UrlMessage = require('viber-bot').Message.Url;
 
 
-  var fileLink = " "
+var fileLink = ""
 
 
 //Initialize the bot with the token and other matadata
@@ -63,8 +65,11 @@ bot.on(BotEvents.SUBSCRIBED, response => {
 //When we recieve a message, we grab it and call the function that creates the slides using the Google APIs
 bot.on(BotEvents.MESSAGE_RECEIVED, (message, response) => {
   //console.log(`${message.text} from ${response.userProfile.name}`);
-  var slideCreationResponse = createPresentation(message.text);
+  createPresentation(message.text);
   console.log(`SLIDE CREATION RESPONSE INSIDE BOT: ${slideCreationResponse}`)
+  while (fileLink == "") {
+    console.log("FIle Link Empty");
+  }
   response.send(new TextMessage(`Thanks for your message ${response.userProfile.name}. If this is a song lyrics, I will try my best to prepare the PowerPoint right away! Have a blessed day!`))
 })
 
@@ -97,7 +102,7 @@ function createPresentation(message) {
   const TOKEN_PATH = 'token.json';
 
   // Load client secrets from a local file.
-  var slideCreationResponse = fs.readFile('credentials.json', (err, content) => {
+  fs.readFile('credentials.json', (err, content) => {
     if (err) return console.log('Error loading client secret file:', err);
     // Authorize a client with credentials, then call the Google Slides API.
     authorize(JSON.parse(content), createSlide);
@@ -249,8 +254,10 @@ function createPresentation(message) {
         //console.log(`OUTPUT OF MODIFIED PRESENTATION ${util.inspect(res3.data, false, null, true)}`);
         fileLink = `https://docs.google.com/presentation/d/${res3.data.presentationId}/edit?usp=sharing`;
         console.log(fileLink)
-        
-        return fileLink
+       
+
+
+        return
         /*
         //We're going to be exporting the file locally to convert it to powerpoint
         var dest = fs.createWriteStream('/tmp/' + nextSunday + '.pptx');
@@ -297,6 +304,8 @@ function createPresentation(message) {
     });
   }
 
+
+  //console.log(`FILE LINK AT END OF EXECUTION: ${fileLink}`);
 
   function nextWeekdayDate(date, day_in_week) {
     const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
