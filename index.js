@@ -3,6 +3,8 @@ const readline = require('readline');
 const { google } = require('googleapis');
 const util = require('util')
 
+var deasync = require('deasync');
+
 
 const express = require('express');
 const app = express();
