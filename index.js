@@ -16,6 +16,7 @@ const ViberBot = require('viber-bot').Bot,
   TextMessage = require('viber-bot').Message.Text;
 
 
+  var fileLink = " "
 
 
 //Initialize the bot with the token and other matadata
@@ -62,7 +63,8 @@ bot.on(BotEvents.SUBSCRIBED, response => {
 //When we recieve a message, we grab it and call the function that creates the slides using the Google APIs
 bot.on(BotEvents.MESSAGE_RECEIVED, (message, response) => {
   //console.log(`${message.text} from ${response.userProfile.name}`);
-  createPresentation(message.text);
+  var slideCreationResponse = createPresentation(message.text);
+  console.log(`SLIDE CREATION RESPONSE INSIDE BOT: ${slideCreationResponse}`)
   response.send(new TextMessage(`Thanks for your message ${response.userProfile.name}. If this is a song lyrics, I will try my best to prepare the PowerPoint right away! Have a blessed day!`))
 })
 
@@ -95,11 +97,12 @@ function createPresentation(message) {
   const TOKEN_PATH = 'token.json';
 
   // Load client secrets from a local file.
-  fs.readFile('credentials.json', (err, content) => {
+  var slideCreationResponse = fs.readFile('credentials.json', (err, content) => {
     if (err) return console.log('Error loading client secret file:', err);
     // Authorize a client with credentials, then call the Google Slides API.
     authorize(JSON.parse(content), createSlide);
   });
+
 
   /**
    * Create an OAuth2 client with the given credentials, and then execute the
@@ -175,6 +178,8 @@ function createPresentation(message) {
       'resource': body
     }, (err, res) => {
 
+      
+      // File Link: https://docs.google.com/presentation/d/1kpW1q9II6k6luOSlgO-IISSvVp2XQW9jPAra1IepOag/edit?usp=sharing
 
       let requests = []
       //Reverse the array of song lyrics because somehow the API writes the slides in reverse order
@@ -241,8 +246,11 @@ function createPresentation(message) {
         }
       }, (err, res3) => {
         if (err) return console.log('There is an error modifying the slide: ' + err);
-        console.log(`OUTPUT OF MODIFIED PRESENTATION ${util.inspect(res3.data, false, null, true)}`);
-
+        //console.log(`OUTPUT OF MODIFIED PRESENTATION ${util.inspect(res3.data, false, null, true)}`);
+        fileLink = `https://docs.google.com/presentation/d/${res3.data.presentationId}/edit?usp=sharing`;
+        console.log(fileLink)
+        
+        return fileLink
         /*
         //We're going to be exporting the file locally to convert it to powerpoint
         var dest = fs.createWriteStream('/tmp/' + nextSunday + '.pptx');
