@@ -258,7 +258,7 @@ function createPresentation(message) {
         fileLink = `https://docs.google.com/presentation/d/${res3.data.presentationId}/edit?usp=sharing`;
         console.log(fileLink)
        
-
+        done = true
 
         return
 
