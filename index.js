@@ -73,7 +73,9 @@ bot.on(BotEvents.MESSAGE_RECEIVED, (message, response) => {
 
   deasync.loopWhile(() => !done)
   console.log(`FILE LINK INSIDE BOT IS: ${fileLink}`)
+  
   response.send(new TextMessage(`Thanks for your message ${response.userProfile.name}. If this is a song lyrics, I will try my best to prepare the PowerPoint right away! Have a blessed day!`))
+  response.send(new UrlMessage(fileLink));
 })
 
 
