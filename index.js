@@ -19,6 +19,7 @@ const ViberBot = require('viber-bot').Bot,
 
 
 var fileLink = ""
+var done = false
 
 
 //Initialize the bot with the token and other matadata
@@ -67,9 +68,9 @@ bot.on(BotEvents.MESSAGE_RECEIVED, (message, response) => {
   //console.log(`${message.text} from ${response.userProfile.name}`);
   createPresentation(message.text);
   //console.log(`SLIDE CREATION RESPONSE INSIDE BOT: ${slideCreationResponse}`)
-  while (fileLink == "") {
-    console.log("FIle Link Empty");
-  }
+
+  deasync.loopWhile(() => !done)
+  console.log(`FILE LINK INSIDE BOT IS: ${fileLink}`)
   response.send(new TextMessage(`Thanks for your message ${response.userProfile.name}. If this is a song lyrics, I will try my best to prepare the PowerPoint right away! Have a blessed day!`))
 })
 
@@ -258,6 +259,9 @@ function createPresentation(message) {
 
 
         return
+
+
+
         /*
         //We're going to be exporting the file locally to convert it to powerpoint
         var dest = fs.createWriteStream('/tmp/' + nextSunday + '.pptx');
