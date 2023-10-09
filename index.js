@@ -27,7 +27,7 @@ var done = false
 //Initialize the bot with the token and other matadata
 const bot = new ViberBot({
   authToken: process.env.BOT_TOKEN,
-  name: "IEEC Dulles",
+  name: "GBEC",
   avatar: "http://ieecdulles.com/wp-content/uploads/2017/09/IEEC_Dulles_logo.png"
 });
 
@@ -58,11 +58,9 @@ if (!process.env.EXPOSE_URL) {
   return;
 }
 
-
-
 //When a user subscribes to the bot, send this message
 bot.on(BotEvents.SUBSCRIBED, response => {
-  response.send(new TextMessage(`Hi there ${response.userProfile.name}. I am the ${bot.name} bot! Feel free to send me song lyrics and I'll convert them to a PowerPoint for you`));
+  response.send(new TextMessage(`Hi there ${response.userProfile.name}. I am the ${bot.name} bot! Feel free to send me song lyrics and I'll upload it for you`));
 });
 
 //When we recieve a message, we grab it and call the function that creates the slides using the Google APIs
@@ -76,11 +74,9 @@ bot.on(BotEvents.MESSAGE_RECEIVED, (message, response) => {
   
 
   
-  response.send(new TextMessage(`Thanks for your message ${response.userProfile.name}. If this is a song lyrics, I will try my best to prepare the PowerPoint right away! Have a blessed day!`))
+  response.send(new TextMessage(`Thanks for your message ${response.userProfile.name}. If this is a song lyrics, I will try my best to create a text file and upload it to Google drive right away! Have a blessed day!`))
   response.send(new UrlMessage(fileLink));
 })
-
-
 
 /**
  * This function gets the message from viber and does a few things:
@@ -102,7 +98,7 @@ function createPresentation(message) {
   console.log(textArray);
 
   // If modifying these scopes, delete token.json.
-  const SCOPES = ['https://www.googleapis.com/auth/presentations', 'https://www.googleapis.com/auth/drive'];
+  const SCOPES = ['https://www.googleapis.com/auth/drive'];
   // The file token.json stores the user's access and refresh tokens, and is
   // created automatically when the authorization flow completes for the first
   // time.
@@ -112,7 +108,7 @@ function createPresentation(message) {
   fs.readFile('credentials.json', (err, content) => {
     if (err) return console.log('Error loading client secret file:', err);
     // Authorize a client with credentials, then call the Google Slides API.
-    authorize(JSON.parse(content), createSlide);
+    authorize(JSON.parse(content), createTextFile);
   });
 
 
@@ -166,12 +162,7 @@ function createPresentation(message) {
     });
   }
 
-
-
-
-  function createSlide(auth) {
-
-    const slides = google.slides({ version: 'v1', auth });
+  async function createTextFile(auth) {
     const drive = google.drive({ version: 'v3', auth });
     //Get the current date to pass to the function that gets us next sunday's date
     var date = Date();
@@ -179,143 +170,38 @@ function createPresentation(message) {
     var nextSunday = nextWeekdayDate(date, 7);
     console.log(`File will be named: ${nextSunday}`)
     //MIME type for downloding and uploading files to Drive
-    var mime = "application/vnd.openxmlformats-officedocument.presentationml.presentation"
 
-    //Name the file with the date for next sunday
-    var body = { name: nextSunday };
-
-    // Duplicate the template file by providing the file ID
-    drive.files.copy({
-      'fileId': '1kpW1q9II6k6luOSlgO-IISSvVp2XQW9jPAra1IepOag',
-      'resource': body
-    }, (err, res) => {
-
-      
-      // File Link: https://docs.google.com/presentation/d/1kpW1q9II6k6luOSlgO-IISSvVp2XQW9jPAra1IepOag/edit?usp=sharing
-
-      let requests = []
-      //Reverse the array of song lyrics because somehow the API writes the slides in reverse order
-      extArray = textArray.reverse();
-      for (let index = 0; index < textArray.length; index++) {
-
-        if (err) return console.log('The API returned an error: ' + err);
-
-        /*
-          We're pushing the request to an array because it's a best practice 
-          not to call the batchupdate API in a loop
-        */
-        var originalSlideID = "p4";
-        requests.push(
-          {
-            duplicateObject: {
-              objectId: originalSlideID,
-              objectIds: {
-                'p4_i5': "copiedText_" + index
-              }
-            },
-          },
-          {
-            deleteText: {
-              objectId: "copiedText_" + index,
-              textRange: {
-                type: 'ALL'
-              }
-            },
-          },
-          {
-            insertText: {
-              objectId: "copiedText_" + index,
-              insertionIndex: 0,
-              text: textArray[index]
-            }
-          }
-
-        )
+    fs.writeFile(`./${nextSunday}.txt`, message, err => {
+      if(err) {
+        console.log(err);
       }
-      // Call the batchUpdate API to duplicate slides, delete text, and insert text
-      slides.presentations.batchUpdate({
-        presentationId: res.data.id,
-        resource: {
-          requests
-        }
-      }, (err, res3) => {
-        if (err) return console.log('There is an error modifying the slide: ' + err);
-      });
+      console.log("FILE WRITTEN SUCCESFULLY");
+    })
 
-      /*
-        After we successfully create the slides with the modifications, 
-        delete the tempalate slide
-      */
-      requests = [{
-        deleteObject: {
-          objectId: originalSlideID
-        }
-      }]
-      slides.presentations.batchUpdate({
-        presentationId: res.data.id,
-        resource: {
-          requests
-        }
-      }, (err, res3) => {
-        if (err) return console.log('There is an error modifying the slide: ' + err);
-        //console.log(`OUTPUT OF MODIFIED PRESENTATION ${util.inspect(res3.data, false, null, true)}`);
-        fileLink = `https://docs.google.com/presentation/d/${res3.data.presentationId}/edit?usp=sharing`;
-        console.log(fileLink)
-       
-        done = true
+    const requestBody = {
+      name: `${nextSunday}.txt`,
+      parents: ['1hNdAzLjcSDN8-h1P7NFtHmqusXH1KpMY'],
+      fields: 'id',
+    };
 
-        return
+    const media = {
+      mimeType: 'text/plain',
+      body: fs.createReadStream(`${nextSunday}.txt`),
+    };
 
-
-
-        /*
-        //We're going to be exporting the file locally to convert it to powerpoint
-        var dest = fs.createWriteStream('/tmp/' + nextSunday + '.pptx');
-
-        drive.files.export({
-          fileId: res3.data.presentationId,
-          mimeType: mime
-        }, {
-          responseType: 'stream'
-        }, function (err, response) {
-          if (err) return done(err);
-
-          response.data.on('error', err => {
-            done(err);
-          }).on('end', () => {
-            console.log("Successfully exported the PowerPoint file!!!");
-
-            //Uplod the file back to Drive as a PPT
-            var fileMetadata = {
-              'name': nextSunday + '.pptx'
-            };
-            var media = {
-              mimeType: mime,
-              body: fs.createReadStream('/tmp/' + nextSunday + '.pptx')
-            };
-            drive.files.create({
-              resource: fileMetadata,
-              media: media
-            }, function (err, file) {
-              if (err) {
-                // Handle error
-                console.error(err);
-              } else {
-                console.log("Successfully uploaded the PowerPoint file!!!");
-              }
-            });
-          })
-            .pipe(dest);
-        });
-        */
-
-      });
-
-    });
+    try {
+      const file = await drive.files.create({
+        requestBody,
+        media: media,
+      })
+      console.log('File ID: ', file.data.id);
+      return file.data.id;
+    }
+    catch(err) {
+      throw err;
+    }
   }
 
-
-  //console.log(`FILE LINK AT END OF EXECUTION: ${fileLink}`);
 
   function nextWeekdayDate(date, day_in_week) {
     const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
@@ -328,13 +214,13 @@ function createPresentation(message) {
 
 
 var server = app.listen(PORT, () => {
-  /*
+  
   //We're registering the Viber bot with the webhook
   bot.setWebhook(
     `${process.env.EXPOSE_URL}/viber/webhook`
   ).catch(error => {
     console.log("Cannot set webhook on following server. Is it running?");
   })
-*/
+
   console.log("The PresentationCreator app is listening on %s", PORT)
 })
