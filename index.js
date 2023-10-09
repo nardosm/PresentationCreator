@@ -21,7 +21,7 @@ const ViberBot = require('viber-bot').Bot,
 
 
 var fileLink = ""
-var done = false
+// var done = false
 
 
 //Initialize the bot with the token and other matadata
@@ -69,13 +69,9 @@ bot.on(BotEvents.MESSAGE_RECEIVED, (message, response) => {
   createPresentation(message.text);
   //console.log(`SLIDE CREATION RESPONSE INSIDE BOT: ${slideCreationResponse}`)
 
-  deasync.loopWhile(() => !done)
-  console.log(`FILE LINK INSIDE BOT IS: ${fileLink}`)
-  
+  // deasync.loopWhile(() => !done)
 
-  
   response.send(new TextMessage(`Thanks for your message ${response.userProfile.name}. If this is a song lyrics, I will try my best to create a text file and upload it to Google drive right away! Have a blessed day!`))
-  response.send(new UrlMessage(fileLink));
 })
 
 /**
@@ -91,11 +87,6 @@ bot.on(BotEvents.MESSAGE_RECEIVED, (message, response) => {
  */
 
 function createPresentation(message) {
-
-  //Split up the message into separate arrays by detecting multiple carriage returns through the Regex
-  var textArray = message.split(/\n{2,}/);
-
-  console.log(textArray);
 
   // If modifying these scopes, delete token.json.
   const SCOPES = ['https://www.googleapis.com/auth/drive'];
@@ -195,11 +186,13 @@ function createPresentation(message) {
         media: media,
       })
       console.log('File ID: ', file.data.id);
+      fs.unlinkSync(`${nextSunday}.txt`);
       return file.data.id;
     }
     catch(err) {
       throw err;
     }
+    
   }
 
 
@@ -214,13 +207,13 @@ function createPresentation(message) {
 
 
 var server = app.listen(PORT, () => {
-  
+  /*
   //We're registering the Viber bot with the webhook
   bot.setWebhook(
     `${process.env.EXPOSE_URL}/viber/webhook`
   ).catch(error => {
     console.log("Cannot set webhook on following server. Is it running?");
   })
-
+  */
   console.log("The PresentationCreator app is listening on %s", PORT)
 })
