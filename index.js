@@ -166,7 +166,7 @@ function createPresentation(message) {
       if(err) {
         console.log(err);
       }
-      console.log("FILE WRITTEN SUCCESFULLY");
+      console.log("FILE WRITTEN TO DISK SUCCESSFULLY");
     })
 
     const requestBody = {
@@ -185,7 +185,7 @@ function createPresentation(message) {
         requestBody,
         media: media,
       })
-      console.log('File ID: ', file.data.id);
+      console.log('FILE UPLOADED TO DRIVE WITH ID: ', file.data.id);
       fs.unlinkSync(`${nextSunday}.txt`);
       return file.data.id;
     }
