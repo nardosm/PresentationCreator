@@ -49,6 +49,7 @@ const SCOPES = ['https://www.googleapis.com/auth/drive'];
 const TOKEN_PATH = 'token.json';
 const CREDENTIALS_PATH = path.join(process.cwd(), 'credentials.json');
 
+app.use(bodyParser.text());
 app.use(bodyParser.json());
 
 var message = '';
@@ -92,6 +93,7 @@ app.post('/set-webhook', (req, res) => {
 })
 
 app.post('/create', function (request, response) {
+  console.log(request.body);
   message = request.body;
   authorize().then(createTextFile).then(() => {
     response.end("yes");
@@ -112,6 +114,7 @@ bot.on(BotEvents.SUBSCRIBED, response => {
 
 //When we recieve a message, we grab it and call the function that creates the slides using the Google APIs
 bot.on(BotEvents.MESSAGE_RECEIVED, (textMessage, response) => {
+  console.log(textMessage);
   message = textMessage.text;
   authorize().then(createTextFile).then(() => {
     response.send(new TextMessage(`Thanks for your message ${response.userProfile.name}. If this is a song lyrics, I will try my best to create a text file and upload it to Google drive right away! Please notify the GBEC Media team once you sent the song lyrics. God Bless You!`))
