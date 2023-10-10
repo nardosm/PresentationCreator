@@ -5,9 +5,19 @@
  * just a matter of click on File > Import > File... on ProPresenter and import the plain text file created by the Bot.
  * 
  * USAGE:
+ * Set the Bot call back URL by doing HTTP call to the /set-webhook path with the body as follows for bot hosted on render :
+ * {
+ *  "url":"https://gbec-lyrics-creator.onrender.com"
+ * } 
  * 
+ * Set the Bot call back URL by doing HTTP call to the /set-webhook path with the body as follows for bot running locally :
+ * 
+ * {
+ *  "url":"http://localhost:9000"
+ * } 
+ * 
+ *
  * Create the following environment variables:
- *    EXPOSE_URL =  <URL of the host machine, if it's local, http://localhost:9000>
  *    BOT_TOKEN = <Token of the Bot retrieved from Viber Bot Admin Console>
  * 
  * If the code is running on a web service (Heroku, Render, etc), create environment variables on those services
@@ -39,7 +49,7 @@ const SCOPES = ['https://www.googleapis.com/auth/drive'];
 const TOKEN_PATH = 'token.json';
 const CREDENTIALS_PATH = path.join(process.cwd(), 'credentials.json');
 
-app.use(bodyParser.text());
+app.use(bodyParser.json());
 
 var message = '';
 
@@ -67,14 +77,16 @@ app.get('/',(req,res) => {
 
 app.post('/set-webhook', (req, res) => {
    //We're registering the Viber bot with the webhook
-  
+  console.log(req.body);
   bot.setWebhook(
     `${req.body.url}/viber/webhook`
   ).then(response => {
     console.log(response);
+    res.send(response);
   })
   .catch(error => {
     console.log("Cannot set webhook on following server. Is it running?");
+    res.send(error);
   })
   
 })
@@ -92,12 +104,6 @@ if (!process.env.BOT_TOKEN) {
   console.log('Could not find bot account token key');
   return;
 } 
-
-//We're also getting the Expose URL from the environment variable to register is later to the bot
-if (!process.env.EXPOSE_URL) {
-  console.log("Could not find exposing url");
-  return;
-}
 
 //When a user subscribes to the bot, send this message
 bot.on(BotEvents.SUBSCRIBED, response => {
