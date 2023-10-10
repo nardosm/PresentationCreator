@@ -50,7 +50,7 @@ const TOKEN_PATH = 'token.json';
 const CREDENTIALS_PATH = path.join(process.cwd(), 'credentials.json');
 
 app.use(bodyParser.text());
-app.use(bodyParser.json());
+// app.use(bodyParser.json());
 
 var message = '';
 
