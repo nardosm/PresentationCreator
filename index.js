@@ -206,13 +206,13 @@ function nextWeekdayDate(date, day_in_week) {
 
 
 var server = app.listen(PORT, () => {
-  
+  /*
   //We're registering the Viber bot with the webhook
   bot.setWebhook(
     `${process.env.EXPOSE_URL}/viber/webhook`
   ).catch(error => {
     console.log("Cannot set webhook on following server. Is it running?");
   })
-  
+  */
   console.log("The lyrics creator app is listening on %s", PORT)
 })
