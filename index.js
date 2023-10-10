@@ -1,3 +1,21 @@
+/**
+ * The purpose of this application/viber bot is to create a plain text file with the song lyrics sent from Viber to the bot. 
+ * This would eliminate copying and emailing the songs, then copying them into ProPresenter. This way the bot will create a plain text
+ * file and upload it to Google Drive. Since we have Google Drive synced as local folder on the ProPresenter computer, then it will be
+ * just a matter of click on File > Import > File... on ProPresenter and import the plain text file created by the Bot.
+ * 
+ * USAGE:
+ * 
+ * Create the following environment variables:
+ *    EXPOSE_URL =  <URL of the host machine, if it's local, http://localhost:9000>
+ *    BOT_TOKEN = <Token of the Bot retrieved from Viber Bot Admin Console>
+ * 
+ * If the code is running on a web service (Heroku, Render, etc), create environment variables on those services
+ * 
+ * Once environment variables are assigned, start the server locally by running "node index.js". 
+ * Use Postman or a simliar applications to issue an HTTP request on http://localhost:9000 with body as the lyrics
+ */
+
 const fs = require('fs');
 const readline = require('readline');
 const { google } = require('googleapis');
@@ -76,7 +94,7 @@ bot.on(BotEvents.SUBSCRIBED, response => {
 bot.on(BotEvents.MESSAGE_RECEIVED, (textMessage, response) => {
   message = textMessage.text;
   authorize().then(createTextFile).then(() => {
-    response.send(new TextMessage(`Thanks for your message ${response.userProfile.name}. If this is a song lyrics, I will try my best to create a text file and upload it to Google drive right away! Have a blessed day!`))
+    response.send(new TextMessage(`Thanks for your message ${response.userProfile.name}. If this is a song lyrics, I will try my best to create a text file and upload it to Google drive right away! Please notify the GBEC Media team once you sent the song lyrics. God Bless You!`))
   }).catch(console.error);
 })
 
