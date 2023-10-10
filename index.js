@@ -65,6 +65,20 @@ app.get('/',(req,res) => {
   return res.send("Hi There!")
 });
 
+app.post('/set-webhook', (req, res) => {
+   //We're registering the Viber bot with the webhook
+  
+  bot.setWebhook(
+    `${req.body.url}/viber/webhook`
+  ).then(response => {
+    console.log(response);
+  })
+  .catch(error => {
+    console.log("Cannot set webhook on following server. Is it running?");
+  })
+  
+})
+
 app.post('/create', function (request, response) {
   message = request.body;
   authorize().then(createTextFile).then(() => {
@@ -208,14 +222,5 @@ function nextWeekdayDate(date, day_in_week) {
 
 
 var server = app.listen(PORT, () => {
-  
-  //We're registering the Viber bot with the webhook
-  
-  // bot.setWebhook(
-  //   `${process.env.EXPOSE_URL}/viber/webhook`
-  // ).catch(error => {
-  //   console.log("Cannot set webhook on following server. Is it running?");
-  // })
-  
   console.log("The lyrics creator app is listening on %s", PORT)
 })
