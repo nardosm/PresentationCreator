@@ -50,7 +50,7 @@ const TOKEN_PATH = 'token.json';
 const CREDENTIALS_PATH = path.join(process.cwd(), 'credentials.json');
 
 app.use(bodyParser.text());
-// app.use(bodyParser.json());
+const jsonParser = bodyParser.json();
 
 var message = '';
 
@@ -76,7 +76,7 @@ app.get('/',(req,res) => {
   return res.send("Hi There!")
 });
 
-app.post('/set-webhook', (req, res) => {
+app.post('/set-webhook', jsonParser, (req, res) => {
    //We're registering the Viber bot with the webhook
   console.log(req.body);
   bot.setWebhook(
@@ -89,7 +89,6 @@ app.post('/set-webhook', (req, res) => {
     console.log("Cannot set webhook on following server. Is it running?");
     res.send(error);
   })
-  
 })
 
 app.post('/create', function (request, response) {
