@@ -48,7 +48,6 @@ app.get('/',(req,res) => {
 });
 
 app.post('/create', function (request, response) {
-  // createPresentation(request.body)
   message = request.body;
   authorize().then(createTextFile).then(() => {
     response.end("yes");
@@ -74,23 +73,12 @@ bot.on(BotEvents.SUBSCRIBED, response => {
 });
 
 //When we recieve a message, we grab it and call the function that creates the slides using the Google APIs
-bot.on(BotEvents.MESSAGE_RECEIVED, (message, response) => {
-  // createPresentation(message.text);
-  message = message.text;
+bot.on(BotEvents.MESSAGE_RECEIVED, (textMessage, response) => {
+  message = textMessage.text;
   authorize().then(createTextFile).then(() => {
     response.send(new TextMessage(`Thanks for your message ${response.userProfile.name}. If this is a song lyrics, I will try my best to create a text file and upload it to Google drive right away! Have a blessed day!`))
   }).catch(console.error);
 })
-
-/**
- * This function gets the message from viber and does a few things:
- *    - Gets authentication token that allows us to interact with Google Drive API
- *    - Creates a plain text file with the lyrics
- *    - Upload the file to Google Drive
- * 
- * @param {message} String The OAuth2 client to get token for.
- */
-
 
 
 /**
@@ -200,13 +188,13 @@ function nextWeekdayDate(date, day_in_week) {
 
 
 var server = app.listen(PORT, () => {
-  /*
+  
   //We're registering the Viber bot with the webhook
   bot.setWebhook(
     `${process.env.EXPOSE_URL}/viber/webhook`
   ).catch(error => {
     console.log("Cannot set webhook on following server. Is it running?");
   })
-  */
-  console.log("The PresentationCreator app is listening on %s", PORT)
+  
+  console.log("The lyrics creator app is listening on %s", PORT)
 })
